@@ -83,6 +83,21 @@ public class Object {
         return unwrappedValue
     }
     
+    public init(_ data: Data?) {
+        guard let data = data else {
+            return
+        }
+        guard let json = try? JSONSerialization.jsonObject(with: data,
+                                                           options: .allowFragments) as? [AnyHashable: Any] else {
+                                                            variables["json"] = try? JSONSerialization.jsonObject(with: data,
+                                                                                                                  options: .allowFragments) as? String
+                                                            return
+        }
+        variables = json
+        variables["json"] = try? JSONSerialization.jsonObject(with: data,
+                                                              options: .allowFragments) as? String
+    }
+    
     public init<T>(_ value: T?) where T: Codable {
         guard let value = value else {
             return
