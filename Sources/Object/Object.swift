@@ -83,6 +83,8 @@ public class Object {
         return unwrappedValue
     }
     
+    public init() { }
+    
     public init(_ data: Data?) {
         guard let data = data else {
             return
