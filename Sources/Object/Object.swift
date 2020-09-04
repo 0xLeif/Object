@@ -40,7 +40,17 @@ public class Object {
     }
     /// Run a Function with or without a value
     @discardableResult
-    public func runFunction(named: AnyHashable, value: ObjectVariable = NSNull()) -> LaterValue<ObjectVariable?> {
+    public func runFunction(named: AnyHashable, value: ObjectVariable = NSNull()) -> ObjectVariable? {
+        try? function(named)(value)
+    }
+    ///Run a Function with a internal value
+    @discardableResult
+    public func runFunction(named: AnyHashable, withInteralValueName iValueName: AnyHashable) -> ObjectVariable? {
+        try? function(named)(variable(iValueName))
+    }
+    /// Run a Async Function with or without a value
+    @discardableResult
+    public func runAsyncFunction(named: AnyHashable, value: ObjectVariable = NSNull()) -> LaterValue<ObjectVariable?> {
         Later.promise { [weak self] promise in
             do {
                 promise.succeed(try self?.function(named)(value))
@@ -49,9 +59,9 @@ public class Object {
             }
         }
     }
-    ///Run a Function with a internal value
+    ///Run a Async Function with a internal value
     @discardableResult
-    public func runFunction(named: AnyHashable, withInteralValueName iValueName: AnyHashable) -> LaterValue<ObjectVariable?> {
+    public func runAsyncFunction(named: AnyHashable, withInteralValueName iValueName: AnyHashable) -> LaterValue<ObjectVariable?> {
         let value = variable(iValueName)
         
         return Later.promise { [weak self] promise in
@@ -75,10 +85,26 @@ public class Object {
     /// Init with Data?
     public init(data: Data? = nil) {
         guard let data = data,
-            let json = try? JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [AnyHashable: Any] else {
-                return
+            let json = try? JSONSerialization
+                .jsonObject(with: data,
+                            options: .allowFragments) as? [AnyHashable: Any] else {
+                                return
         }
-        
+        variables = json
+    }
+    
+    public init<T>(_ value: T?) where T: Codable {
+        guard let value = value else {
+            return
+        }
+        guard let data =  try? JSONEncoder().encode(value) else {
+            return
+        }
+        guard let json = try? JSONSerialization
+            .jsonObject(with: data,
+                        options: .allowFragments) as? [AnyHashable: Any] else {
+                            return
+        }
         variables = json
     }
 }
