@@ -83,6 +83,14 @@ public class Object {
         return unwrappedValue
     }
     
+    public init(_ closure: () -> Any?) {
+        guard let value = closure() else {
+            return
+        }
+        Mirror(reflecting: value).children
+            .forEach { addVariable($0.label, value: $0.value)}
+    }
+    
     public init(_ data: Data?) {
         guard let data = data else {
             return
