@@ -82,16 +82,6 @@ public class Object {
         guard let (_, unwrappedValue) = mValue.children.first else { return NSNull() }
         return unwrappedValue
     }
-    /// Init with Data?
-    public init(data: Data? = nil) {
-        guard let data = data,
-            let json = try? JSONSerialization
-                .jsonObject(with: data,
-                            options: .allowFragments) as? [AnyHashable: Any] else {
-                                return
-        }
-        variables = json
-    }
     
     public init<T>(_ value: T?) where T: Codable {
         guard let value = value else {
@@ -100,17 +90,20 @@ public class Object {
         guard let data =  try? JSONEncoder().encode(value) else {
             return
         }
-        guard let json = try? JSONSerialization
-            .jsonObject(with: data,
-                        options: .allowFragments) as? [AnyHashable: Any] else {
-                            return
+        guard let json = try? JSONSerialization.jsonObject(with: data,
+                                                           options: .allowFragments) as? [AnyHashable: Any] else {
+                                                            variables["json"] = try? JSONSerialization.jsonObject(with: data,
+                                                                                                                  options: .allowFragments) as? String
+                                                            return
         }
         variables = json
+        variables["json"] = try? JSONSerialization.jsonObject(with: data,
+                                                              options: .allowFragments) as? String
     }
 }
 
 public extension Data {
     var object: Object {
-        Object(data: self)
+        Object(self)
     }
 }
