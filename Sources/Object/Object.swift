@@ -14,7 +14,7 @@ public class Object {
     /// Variables of the object
     public var variables: [AnyHashable: ObjectVariable] = [:]
     /// @dynamicMemberLookup
-    subscript(dynamicMember member: String) -> ObjectVariable {
+    public subscript(dynamicMember member: String) -> ObjectVariable {
         variables[member] ?? NSNull()
     }
     /// Retrieve a Function from the current object
