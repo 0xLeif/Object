@@ -48,7 +48,7 @@ public class Object {
         return object
     }
     /// Add a Value with a name to the current object
-    public func addVariable(_ named: AnyHashable, value: Any) {
+    public func add(variable named: AnyHashable = "_value", value: Any) {
         variables[named] = value
     }
     /// Add a ChildObject with a name of `_object` to the current object
@@ -60,22 +60,22 @@ public class Object {
         variables["_array"] = array
     }
     /// Add a Function with a name and a closure to the current object
-    public func addFunction(named: AnyHashable, value: @escaping ObjectFunction) {
+    public func add(function named: AnyHashable, value: @escaping ObjectFunction) {
         functions[named] = value
     }
     /// Run a Function with or without a value
     @discardableResult
-    public func runFunction(named: AnyHashable, value: Any = Object()) -> Object {
+    public func run(function named: AnyHashable, value: Any = Object()) -> Object {
         Object(try? function(named)(value))
     }
     ///Run a Function with a internal value
     @discardableResult
-    public func runFunction(named: AnyHashable, withInteralValueName iValueName: AnyHashable) -> Object {
+    public func run(function named: AnyHashable, withInteralValueName iValueName: AnyHashable) -> Object {
         Object(try? function(named)(variable(iValueName)))
     }
-    /// Run a Async Function with or without a value
+    /// Run an Async Function with or without a value
     @discardableResult
-    public func runAsyncFunction(named: AnyHashable, value: Any = Object()) -> LaterValue<Object> {
+    public func aync(function named: AnyHashable, value: Any = Object()) -> LaterValue<Object> {
         Later.promise { [weak self] promise in
             do {
                 promise.succeed(Object(try self?.function(named)(value)))
@@ -84,9 +84,9 @@ public class Object {
             }
         }
     }
-    ///Run a Async Function with a internal value
+    ///Run an Async Function with a internal value
     @discardableResult
-    public func runAsyncFunction(named: AnyHashable, withInteralValueName iValueName: AnyHashable) -> LaterValue<Object> {
+    public func async(function named: AnyHashable, withInteralValueName iValueName: AnyHashable) -> LaterValue<Object> {
         let value = variable(iValueName)
         
         return Later.promise { [weak self] promise in
@@ -134,7 +134,7 @@ public class Object {
             consume(Object(data: data))
         } else {
             consume(Object {
-                $0.addVariable("_value", value: unwrappedValue)
+                $0.add(value: unwrappedValue)
             })
         }
     }
@@ -142,7 +142,7 @@ public class Object {
     // MARK: private init
     
     private init(array: [Any]) {
-        addVariable("_array", value: array.map(Object.init))
+        add(variable: "_array", value: array.map(Object.init))
     }
     private init(dictionary: [AnyHashable: Any]) {
         variables = dictionary
@@ -153,14 +153,15 @@ public class Object {
         }
         if let json = try? JSONSerialization.jsonObject(with: data,
                                                         options: .allowFragments) as? [Any] {
-            addVariable("_array", value: json)
+            add(variable: "_array", value: json)
             return
         }
         guard let json = try? JSONSerialization.jsonObject(with: data,
                                                            options: .allowFragments) as? [AnyHashable: Any] else {
                                                             return
         }
-        variables = json
+        consume(Object(json))
+        add(value: data)
     }
 }
 
@@ -176,10 +177,10 @@ public extension Object {
     @discardableResult
     func consume(_ object: Object) -> Object {
         object.variables.forEach { (key, value) in
-            self.addVariable(key, value: value)
+            self.add(variable: key, value: value)
         }
         object.functions.forEach { (key, closure) in
-            self.addFunction(named: key, value: closure)
+            self.add(function: key, value: closure)
         }
         
         return self
@@ -212,8 +213,7 @@ public extension Object {
                 return
             }
             guard let object = value as? Object else {
-                allVariables[uKey] = Object()
-                allVariables[uKey]?.addVariable("_value", value: value)
+                allVariables[uKey] = Object(value)
                 return
             }
             allVariables[uKey] = Object(dictionary: object.all)
@@ -224,13 +224,11 @@ public extension Object {
     
     var array: [Object] {
         if let array = variables["_array"] as? [Data] {
-            return array.map { Object($0) }
+            return array.map { Object(data: $0) }
         } else if let array = variables["_array"] as? [Any] {
             return array.map { value in
                 guard let json = value as? [AnyHashable: Any] else {
-                    return Object {
-                        $0.addVariable("_value", value: value)
-                    }
+                    return Object(value)
                 }
                 return Object(dictionary: json)
             }
@@ -248,6 +246,14 @@ public extension Object {
     
     func value<T>(as type: T.Type? = nil) -> T? {
         value as? T
+    }
+    
+    func value<T>(decodedAs type: T.Type) -> T? where T: Decodable {
+        guard let data = value(as: Data.self) else {
+            return nil
+        }
+        
+        return try? JSONDecoder().decode(T.self, from: data)
     }
 }
 

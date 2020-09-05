@@ -8,25 +8,38 @@ obj.functions["printy"] = { input in
     "{ \(Object(input).value() ?? -1) }"
 }
 
-obj.runFunction(named: "printy", value: obj.qwerty)
-obj.runFunction(named: "printy", value: obj.variable("qwerty"))
-obj.runFunction(named: "printy", withInteralValueName: "qwerty")
+XCTAssertEqual(obj.run(function: "printy", value: obj.qwerty).value(), "{ 12456 }")
+XCTAssertEqual(obj.run(function: "printy", value: obj.variable("qwerty")).value(), "{ 12456 }")
+XCTAssertEqual(obj.run(function: "printy", withInteralValueName: "qwerty").value(), "{ 12456 }" )
 ```
 
 ## [Data](https://jsonplaceholder.typicode.com/posts) Example
 
 ```swift
-Later.fetch(url: URL(string: "https://jsonplaceholder.typicode.com/posts")!)
-    .whenSuccess { (data, response, error) in
-        let obj = Object(data)
-        
-        XCTAssertEqual(obj.array.count, 100)
-        
-        let first: Object? = obj.array.first
-        
-        XCTAssertEqual(first?.userId.value(), 1)
-        XCTAssertEqual(first?.id.value(), 1)
-        XCTAssertEqual(first?.title.value(), "sunt aut facere repellat provident occaecati excepturi optio reprehenderit")
-        XCTAssertEqual(first?.body.value(), "quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto")
+var mockDataView = UIView.later { later in
+    // Fetch Data
+    later.fetch(url: URL(string: "https://jsonplaceholder.typicode.com/todos/3")!)
+        // Store Values in an Object
+        .map { (data, response, error) in
+            Object(data).configure {
+                $0.add(variable: "response", value: response as Any)
+                $0.add(variable: "error", value: error as Any)
+            }
+    }
+        // Save Data
+        .flatMap { object in
+            object.value(decodedAs: MockData.self)
+                .save(withKey: "mock_03")
+    }
+        // Load Data
+        .flatMap { _ in
+            MockData.load(withKey: "mock_03")
+    }
+        // Present UI
+        .flatMap { data in
+            later.main {
+                Label("Data: \(data.title)").number(ofLines: 100)
+            }
+    }
 }
 ```
