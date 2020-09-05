@@ -3,8 +3,17 @@ name: Swift
 on: [push]
 
 jobs:
-  macos:
+  ubuntu:
+    runs-on: ubuntu-18.04
 
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: swift build -v
+    - name: Run tests
+      run: swift test -v
+      
+  macos:
     runs-on: macos-latest
 
     steps:
