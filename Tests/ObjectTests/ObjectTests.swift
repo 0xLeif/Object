@@ -65,6 +65,96 @@ final class ObjectTests: XCTestCase {
         XCTAssertEqual(obj.string.value(), "Object")
     }
     
+    func testConsume() {
+        struct SMObj: Codable {
+            let id = 1
+            let string = "Object"
+        }
+        
+        let smObj = SMObj().object
+        
+        let dictObj = Object([
+            "some": 3.14,
+            3.14: "some"
+        ])
+        
+        let arrayObj = Object((1 ... 100).map { $0 })
+        
+        let obj = Object(
+            ["id": 10]
+        )
+        XCTAssertEqual(obj.id.value(), 10)
+        XCTAssertEqual(obj.array.count, 0)
+        
+        XCTAssertNil(obj.some.value(as: Double.self))
+        XCTAssertNil(obj.variable(3.14).value(as: String.self))
+        XCTAssertNil(obj.string.value(as: String.self))
+        
+        [smObj, dictObj, arrayObj]
+            .forEach {
+                obj.consume($0)
+        }
+        
+        XCTAssertNotEqual(obj.id.value(), 10)
+        
+        XCTAssertNotNil(obj.some.value(as: Double.self))
+        XCTAssertNotNil(obj.variable(3.14).value(as: String.self))
+        XCTAssertNotNil(obj.string.value(as: String.self))
+        
+        XCTAssertEqual(obj.id.value(), smObj.id.value() ?? -1)
+        XCTAssertEqual(obj.string.value(), "Object")
+        XCTAssertEqual(obj.array.count, arrayObj.array.count)
+        XCTAssertEqual(obj.some.value(), 3.14)
+        XCTAssertEqual(obj.variable(3.14).value(), "some")
+    }
+    
+    func testAdd() {
+        struct SMObj: Codable {
+            let id = 1
+            let string = "Object"
+        }
+        
+        let smObj = SMObj().object
+        
+        let dictObj = Object([
+            "some": 3.14,
+            3.14: "some"
+        ])
+        
+        let arrayObj = Object((1 ... 100).map { $0 })
+        
+        let empty = Object()
+        let obj = Object(
+            ["id": 10]
+        )
+        XCTAssertEqual(obj.id.value(), 10)
+        XCTAssertEqual(obj.array.count, 0)
+        
+        XCTAssertNil(obj.some.value(as: Double.self))
+        XCTAssertNil(obj.variable(3.14).value(as: String.self))
+        XCTAssertNil(obj.string.value(as: String.self))
+        
+        [smObj, dictObj]
+            .forEach {
+                empty.consume($0)
+        }
+        obj.add(childObject: empty)
+        obj.add(array: arrayObj.array)
+        
+        XCTAssertEqual(obj.id.value(), 10)
+        XCTAssertNotEqual(obj.id.value(), smObj.id.value() ?? -1)
+        
+        XCTAssertNotNil(obj.object.some.value(as: Double.self))
+        XCTAssertNotNil(obj.object.variable(3.14).value(as: String.self))
+        XCTAssertNotNil(obj.object.string.value(as: String.self))
+        
+        XCTAssertEqual(obj.object.id.value(), smObj.id.value() ?? -1)
+        XCTAssertEqual(obj.object.string.value(), "Object")
+        XCTAssertEqual(obj.array.count, arrayObj.array.count)
+        XCTAssertEqual(obj.object.some.value(), 3.14)
+        XCTAssertEqual(obj.object.variable(3.14).value(), "some")
+    }
+    
     func testFetchObject() {
         let sema = DispatchSemaphore(value: 0)
         
@@ -129,6 +219,8 @@ final class ObjectTests: XCTestCase {
         ("testArray", testArray),
         ("testDictionary", testDictionary),
         ("testCodableObject", testCodableObject),
+        ("testConsume", testConsume),
+        ("testAdd", testAdd),
         ("testFetchObject", testFetchObject),
         ("testFetch100Objects", testFetch100Objects),
         ("testDive", testDive)
