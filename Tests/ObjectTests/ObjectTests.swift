@@ -105,6 +105,23 @@ final class ObjectTests: XCTestCase {
         sema.wait()
     }
     
+    func testDive() {
+        let sema = DispatchSemaphore(value: 0)
+        
+        Later.fetch(url: URL(string: "https://jsonplaceholder.typicode.com/users/7")!)
+            .whenSuccess { (data, response, error) in
+                let obj = Object(data)
+                
+                XCTAssertEqual(obj.address.street.value(), "Rex Trail")
+                XCTAssertEqual(obj.address.geo.lng.value(), "21.8984")
+                XCTAssertEqual(obj.address.geo.lat.value(), "24.8918")
+                
+                sema.signal()
+        }
+        
+        sema.wait()
+    }
+    
     static var allTests = [
         ("testBasic", testBasic),
         ("testExample", testExample),
@@ -113,6 +130,7 @@ final class ObjectTests: XCTestCase {
         ("testDictionary", testDictionary),
         ("testCodableObject", testCodableObject),
         ("testFetchObject", testFetchObject),
-        ("testFetch100Objects", testFetch100Objects)
+        ("testFetch100Objects", testFetch100Objects),
+        ("testDive", testDive)
     ]
 }
