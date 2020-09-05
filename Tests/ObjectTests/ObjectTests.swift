@@ -63,6 +63,13 @@ final class ObjectTests: XCTestCase {
         
         XCTAssertEqual(obj.id.value(), 1)
         XCTAssertEqual(obj.string.value(), "Object")
+        
+        print(obj.value)
+        
+        let smObj = obj.value(decodedAs: SMObj.self)
+        
+        XCTAssertEqual(smObj?.id, 1)
+        XCTAssertEqual(smObj?.string, "Object")
     }
     
     func testConsume() {

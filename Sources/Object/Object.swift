@@ -48,7 +48,7 @@ public class Object {
         return object
     }
     /// Add a Value with a name to the current object
-    public func addVariable(_ named: AnyHashable, value: Any) {
+    public func addVariable(_ named: AnyHashable = "_value", value: Any) {
         variables[named] = value
     }
     /// Add a ChildObject with a name of `_object` to the current object
@@ -134,7 +134,7 @@ public class Object {
             consume(Object(data: data))
         } else {
             consume(Object {
-                $0.addVariable("_value", value: unwrappedValue)
+                $0.addVariable(value: unwrappedValue)
             })
         }
     }
@@ -160,7 +160,8 @@ public class Object {
                                                            options: .allowFragments) as? [AnyHashable: Any] else {
                                                             return
         }
-        variables = json
+        consume(Object(json))
+        addVariable(value: data)
     }
 }
 
@@ -212,8 +213,7 @@ public extension Object {
                 return
             }
             guard let object = value as? Object else {
-                allVariables[uKey] = Object()
-                allVariables[uKey]?.addVariable("_value", value: value)
+                allVariables[uKey] = Object(value)
                 return
             }
             allVariables[uKey] = Object(dictionary: object.all)
@@ -224,13 +224,11 @@ public extension Object {
     
     var array: [Object] {
         if let array = variables["_array"] as? [Data] {
-            return array.map { Object($0) }
+            return array.map { Object(data: $0) }
         } else if let array = variables["_array"] as? [Any] {
             return array.map { value in
                 guard let json = value as? [AnyHashable: Any] else {
-                    return Object {
-                        $0.addVariable("_value", value: value)
-                    }
+                    return Object(value)
                 }
                 return Object(dictionary: json)
             }
@@ -248,6 +246,14 @@ public extension Object {
     
     func value<T>(as type: T.Type? = nil) -> T? {
         value as? T
+    }
+    
+    func value<T>(decodedAs type: T.Type) -> T? where T: Decodable {
+        guard let data = value(as: Data.self) else {
+            return nil
+        }
+        
+        return try? JSONDecoder().decode(T.self, from: data)
     }
 }
 
