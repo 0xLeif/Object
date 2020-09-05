@@ -14,9 +14,9 @@ final class ObjectTests: XCTestCase {
             "{ \(Object(input).value() ?? -1) }"
         }
         
-        XCTAssertEqual(obj.runFunction(named: "printy", value: obj.qwerty).value(), "{ 12456 }")
-        XCTAssertEqual(obj.runFunction(named: "printy", value: obj.variable("qwerty")).value(), "{ 12456 }")
-        XCTAssertEqual(obj.runFunction(named: "printy", withInteralValueName: "qwerty").value(), "{ 12456 }" )
+        XCTAssertEqual(obj.run(function: "printy", value: obj.qwerty).value(), "{ 12456 }")
+        XCTAssertEqual(obj.run(function: "printy", value: obj.variable("qwerty")).value(), "{ 12456 }")
+        XCTAssertEqual(obj.run(function: "printy", withInteralValueName: "qwerty").value(), "{ 12456 }" )
     }
     
     func testObject() {
@@ -33,8 +33,8 @@ final class ObjectTests: XCTestCase {
         let newObj = Object(obj)
         
         XCTAssertEqual(newObj.qwerty.value(), 123456)
-        XCTAssertEqual(newObj.runFunction(named: "printy", value: 654321).value(), "{ 654321 }")
-        XCTAssertEqual(newObj.runFunction(named: "toString", value: true).value(), "true")
+        XCTAssertEqual(newObj.run(function: "printy", value: 654321).value(), "{ 654321 }")
+        XCTAssertEqual(newObj.run(function: "toString", value: true).value(), "true")
     }
     
     func testArray() {
