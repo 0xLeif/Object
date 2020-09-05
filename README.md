@@ -13,7 +13,8 @@ obj.runFunction(named: "printy", value: obj.variable("qwerty"))
 obj.runFunction(named: "printy", withInteralValueName: "qwerty")
 ```
 
-## Data Example
+## [Data](https://jsonplaceholder.typicode.com/posts) Example
+
 ```swift
 Later.fetch(url: URL(string: "https://jsonplaceholder.typicode.com/posts")!)
     .whenSuccess { (data, response, error) in
