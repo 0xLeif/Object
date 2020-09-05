@@ -13,7 +13,7 @@ XCTAssertEqual(obj.run(function: "printy", value: obj.variable("qwerty")).value(
 XCTAssertEqual(obj.run(function: "printy", withInteralValueName: "qwerty").value(), "{ 12456 }" )
 ```
 
-## [Data](https://jsonplaceholder.typicode.com/posts) Example
+## [Data](https://jsonplaceholder.typicode.com/todos/3) Example
 
 ```swift
 var mockDataView = UIView.later { later in
