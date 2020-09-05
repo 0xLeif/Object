@@ -26,6 +26,9 @@ let package = Package(
         ]),
         .testTarget(
             name: "ObjectTests",
-            dependencies: ["Object"]),
+            dependencies: [
+                "Object",
+                "Later"
+        ]),
     ]
 )
