@@ -21,9 +21,7 @@ public class Object {
             return Object(array: array)
         }
         guard let object = value as? Object else {
-            return Object {
-                $0.addVariable("_value", value: value)
-            }
+            return Object(value)
         }
         return object
     }
