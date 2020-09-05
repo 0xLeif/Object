@@ -4,13 +4,8 @@
 let obj = Object()
 obj.variables["qwerty"] = 12456
 obj.functions["printy"] = { input in
-    guard let input = input as? Int else {
-        throw ObjectError.invalidParameter
-    }
-    print("[[{ \(input) }]]")
-    return "{ \(input) }"
+    "{ \(Object(input).value() ?? -1) }"
 }
-
 
 obj.runFunction(named: "printy", value: obj.qwerty)
 obj.runFunction(named: "printy", value: obj.variable("qwerty"))
