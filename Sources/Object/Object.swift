@@ -29,7 +29,7 @@ public class Object {
     @discardableResult
     public func function(_ named: AnyHashable) -> ObjectFunction {
         guard let function = functions[named] else {
-            return { _ in NSNull() }
+            return { _ in Object() }
         }
         return function
     }
@@ -43,9 +43,7 @@ public class Object {
             return Object(array: array)
         }
         guard let object = value as? Object else {
-            return Object {
-                $0.addVariable("_value", value: unwrap(value))
-            }
+            return Object(unwrap(value))
         }
         return object
     }
@@ -53,13 +51,21 @@ public class Object {
     public func addVariable(_ named: AnyHashable, value: Any) {
         variables[named] = value
     }
+    /// Add a ChildObject with a name of `_object` to the current object
+    public func add(childObject object: Object) {
+        variables["_object"] = object
+    }
+    /// Add an Array with a name of `_array` to the current object
+    public func add(array: [Any]) {
+        variables["_array"] = array
+    }
     /// Add a Function with a name and a closure to the current object
     public func addFunction(named: AnyHashable, value: @escaping ObjectFunction) {
         functions[named] = value
     }
     /// Run a Function with or without a value
     @discardableResult
-    public func runFunction(named: AnyHashable, value: Any = NSNull()) -> Object {
+    public func runFunction(named: AnyHashable, value: Any = Object()) -> Object {
         Object(try? function(named)(value))
     }
     ///Run a Function with a internal value
@@ -69,7 +75,7 @@ public class Object {
     }
     /// Run a Async Function with or without a value
     @discardableResult
-    public func runAsyncFunction(named: AnyHashable, value: Any = NSNull()) -> LaterValue<Object> {
+    public func runAsyncFunction(named: AnyHashable, value: Any = Object()) -> LaterValue<Object> {
         Later.promise { [weak self] promise in
             do {
                 promise.succeed(Object(try self?.function(named)(value)))
@@ -252,7 +258,6 @@ public extension Data {
 }
 
 public extension Encodable {
-    
     var object: Object {
         guard let data =  try? JSONEncoder().encode(self) else {
             return Object(self)
