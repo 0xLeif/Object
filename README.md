@@ -1,4 +1,4 @@
-# Object
+# Object ([SwiftUI-Object](https://github.com/0xLeif/SUIObject))
 
 ## Basic Example
 ```swift
