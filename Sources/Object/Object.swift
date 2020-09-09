@@ -75,7 +75,7 @@ public class Object {
     }
     /// Run an Async Function with or without a value
     @discardableResult
-    public func aync(function named: AnyHashable, value: Any = Object()) -> LaterValue<Object> {
+    public func async(function named: AnyHashable, value: Any = Object()) -> LaterValue<Object> {
         Later.promise { [weak self] promise in
             do {
                 promise.succeed(Object(try self?.function(named)(value)))
@@ -116,7 +116,13 @@ public class Object {
         
         closure(self)
     }
-    public init(_ value: Any?) {
+    public init(_ value: Any? = nil, _ closure: ((Object) -> Void)? = nil) {
+        defer {
+            if let closure = closure {
+                configure(closure)
+            }
+        }
+        
         guard let value = value else {
             return
         }
@@ -142,7 +148,9 @@ public class Object {
     // MARK: private init
     
     private init(array: [Any]) {
-        add(variable: "_array", value: array.map(Object.init))
+        add(variable: "_array", value: array.map {
+            Object($0)
+        })
     }
     private init(dictionary: [AnyHashable: Any]) {
         variables = dictionary
