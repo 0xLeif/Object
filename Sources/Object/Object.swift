@@ -197,15 +197,32 @@ public extension Object {
 
 extension Object: CustomStringConvertible {
     public var description: String {
-        variables
-            .map { (key, value) in
-                guard let object = value as? Object else {
-                    return "\t\(key): \(value)"
-                }
-                
-                return object.description
+        var varDescription: String? = "|\tVariables\n"
+        var funcDescription: String? = "|\tFunctions\n"
+        
+        if variables.isEmpty {
+            varDescription = nil
+        } else {
+            varDescription? += variables
+                .map { (key, value) in
+                    guard let object = value as? Object else {
+                        return "|\t* \(key): \(value) (\(type(of: value)))"
+                    }
+                    
+                    return "|\t \(key): Object {\n\(object.description.split(separator: "\n").map { "|\t \($0)" }.dropFirst().joined(separator: "\n"))"
+            }
+            .joined(separator: "\n")
         }
-        .joined(separator: "\n")
+        
+        if functions.isEmpty {
+            funcDescription = nil
+        } else {
+            funcDescription? += functions
+            .map { (key, value) in "|\t* \(key): \(String(describing: value))" }
+            .joined(separator: "\n")
+        }
+        
+        return ["Object {", varDescription, funcDescription, "}"].compactMap { $0 }.joined(separator: "\n")
     }
 }
 

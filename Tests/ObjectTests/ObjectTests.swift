@@ -7,6 +7,67 @@ final class ObjectTests: XCTestCase {
         XCTAssertNil(Object(0).value(as: Double.self))
     }
     
+    func testBasicInit() {
+        let obj = Object("init_value") { o in
+            o.add(variable: "SomeValue", value: "qwerty")
+        }
+        
+        XCTAssertEqual(obj.value(), "init_value")
+        XCTAssertEqual(obj.SomeValue.value(), "qwerty")
+    }
+    
+    func testObjectInit() {
+        let obj = Object("init_value") { o in
+            o.add(variable: "SomeObject", value: Object("qwerty"))
+        }
+        
+        XCTAssertEqual(obj.value(), "init_value")
+        XCTAssertEqual(obj.SomeObject.value(), "qwerty")
+    }
+    
+    func testObjectConsumeInit() {
+        let obj = Object(Object("init_value") { o in
+            o.add(variable: 3.14, value: "pi")
+            o.add(function: 3.15) { input in
+                guard let value = input as? Double else {
+                    return input
+                }
+                
+                return value * 3.15
+            }
+            
+        }) { o in
+            o.add(variable: "SomeValue", value: "qwerty")
+        }
+        
+        XCTAssertEqual(obj.value(), "init_value")
+        XCTAssertEqual(obj.SomeValue.value(), "qwerty")
+    }
+    
+    func testComplexInit() {
+        let innerObject = Object("init_value") { o in
+            o.add(variable: "SomeValue", value: "qwerty")
+            o.add(variable: 3.14, value: "pi")
+            o.add(function: 3.15) { (Object($0).value(as: Double.self) ?? 0.0) * 3.15 }
+        }
+        
+        let otherObject = Object("other_value") { o in
+            o.add(variable: "SomeOtherValue", value: "otherqwerty")
+            o.add(variable: 3.14, value: 3.14)
+            o.add(function: false) { (Object($0).value(as: Double.self) ?? 0.0) * 3.15 }
+        }
+        
+        let obj = Object { p in
+            p.add(childObject: innerObject)
+        }
+        
+        innerObject.add(childObject: otherObject)
+        
+        XCTAssertEqual(obj.value(as: Object.self)?.description, Object().description)
+        XCTAssertEqual(obj.object.value(), "init_value")
+        XCTAssertEqual(obj.object.SomeValue.value(), "qwerty")
+    }
+    
     func testExample() {
         let obj = Object()
         obj.variables["qwerty"] = 12456
@@ -221,6 +282,10 @@ final class ObjectTests: XCTestCase {
     
     static var allTests = [
         ("testBasic", testBasic),
+        ("testBasicInit", testBasicInit),
+        ("testObjectInit", testObjectInit),
+        ("testObjectConsumeInit", testObjectConsumeInit),
+        ("testComplexInit", testComplexInit),
         ("testExample", testExample),
         ("testObject", testObject),
         ("testArray", testArray),
