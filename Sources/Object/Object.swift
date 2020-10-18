@@ -210,7 +210,7 @@ public class Object {
         }
         guard let json = try? JSONSerialization.jsonObject(with: data,
                                                            options: .allowFragments) as? [AnyHashable: Any] else {
-                                                            return
+            return
         }
         consume(Object(json))
         add(value: data)
@@ -264,16 +264,16 @@ extension Object: CustomStringConvertible {
                     }
                     
                     return "|\t \(key): Object {\n\(object.description.split(separator: "\n").map { "|\t \($0)" }.dropFirst().joined(separator: "\n"))"
-            }
-            .joined(separator: "\n")
+                }
+                .joined(separator: "\n")
         }
         
         if functions.isEmpty {
             funcDescription = nil
         } else {
             funcDescription? += functions
-            .map { (key, value) in "|\t* \(key): \(String(describing: value))" }
-            .joined(separator: "\n")
+                .map { (key, value) in "|\t* \(key): \(String(describing: value))" }
+                .joined(separator: "\n")
         }
         
         return ["Object {", varDescription, funcDescription, "}"].compactMap { $0 }.joined(separator: "\n")
