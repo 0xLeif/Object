@@ -195,6 +195,16 @@ public extension Object {
     }
 }
 
+extension Object: Hashable {
+    public static func == (lhs: Object, rhs: Object) -> Bool {
+        lhs.description == rhs.description
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(description)
+    }
+}
+
 extension Object: CustomStringConvertible {
     public var description: String {
         var varDescription: String? = "|\tVariables\n"
@@ -296,3 +306,4 @@ public extension Encodable {
         return Object(data)
     }
 }
+

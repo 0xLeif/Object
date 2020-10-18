@@ -280,6 +280,17 @@ final class ObjectTests: XCTestCase {
         sema.wait()
     }
     
+    func testHashable() {
+        var objDict = [Object: Object]()
+        
+        let someObjectValue = Object("Some Value")
+        let someObjectKey = Object("Some Key")
+        
+        objDict[someObjectKey] = someObjectValue
+        
+        XCTAssertEqual(objDict[someObjectKey], someObjectValue)
+    }
+    
     static var allTests = [
         ("testBasic", testBasic),
         ("testBasicInit", testBasicInit),
