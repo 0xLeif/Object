@@ -48,16 +48,60 @@ public class Object {
         return object
     }
     /// Add a Value with a name to the current object
-    public func add(variable named: AnyHashable = "_value", value: Any) {
+    @discardableResult
+    public func add(variable named: AnyHashable = "_value", value: Any) -> Self {
         variables[named] = value
+        
+        return self
+    }
+    /// Modify a Value with a name to the current object
+    @discardableResult
+    public func modify<T>(variable named: AnyHashable = "_value", modifier: (T?) -> T?) -> Self {
+        guard let variable = variables[named],
+              let value = variable as? T else {
+            variables[named] = modifier(nil)
+            
+            return self
+        }
+        variables[named] = modifier(value)
+        
+        return self
+    }
+    /// Set a Value with a name to the current object
+    @discardableResult
+    public func set<T>(variable named: AnyHashable = "_value", modifier: (T) -> T?) -> Self {
+        guard let variable = variables[named],
+              let value = variable as? T else {
+            return self
+        }
+        variables[named] = modifier(value)
+        
+        return self
+    }
+    /// Update a Value with a name to the current object
+    @discardableResult
+    public func update<T>(variable named: AnyHashable = "_value", modifier: (T) -> T) -> Self {
+        guard let variable = variables[named],
+              let value = variable as? T else {
+            return self
+        }
+        variables[named] = modifier(value)
+        
+        return self
     }
     /// Add a ChildObject with a name of `_object` to the current object
-    public func add(childObject object: Object) {
+    @discardableResult
+    public func add(childObject object: Object) -> Self {
         variables["_object"] = object
+        
+        return self
     }
     /// Add an Array with a name of `_array` to the current object
-    public func add(array: [Any]) {
+    @discardableResult
+    public func add(array: [Any]) -> Self {
         variables["_array"] = array
+        
+        return self
     }
     /// Add a Function with a name and a closure to the current object
     public func add(function named: AnyHashable, value: @escaping ObjectFunction) {
@@ -166,7 +210,7 @@ public class Object {
         }
         guard let json = try? JSONSerialization.jsonObject(with: data,
                                                            options: .allowFragments) as? [AnyHashable: Any] else {
-                                                            return
+            return
         }
         consume(Object(json))
         add(value: data)
@@ -195,6 +239,16 @@ public extension Object {
     }
 }
 
+extension Object: Hashable {
+    public static func == (lhs: Object, rhs: Object) -> Bool {
+        lhs.description == rhs.description
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(description)
+    }
+}
+
 extension Object: CustomStringConvertible {
     public var description: String {
         var varDescription: String? = "|\tVariables\n"
@@ -210,16 +264,16 @@ extension Object: CustomStringConvertible {
                     }
                     
                     return "|\t \(key): Object {\n\(object.description.split(separator: "\n").map { "|\t \($0)" }.dropFirst().joined(separator: "\n"))"
-            }
-            .joined(separator: "\n")
+                }
+                .joined(separator: "\n")
         }
         
         if functions.isEmpty {
             funcDescription = nil
         } else {
             funcDescription? += functions
-            .map { (key, value) in "|\t* \(key): \(String(describing: value))" }
-            .joined(separator: "\n")
+                .map { (key, value) in "|\t* \(key): \(String(describing: value))" }
+                .joined(separator: "\n")
         }
         
         return ["Object {", varDescription, funcDescription, "}"].compactMap { $0 }.joined(separator: "\n")
@@ -296,3 +350,4 @@ public extension Encodable {
         return Object(data)
     }
 }
+

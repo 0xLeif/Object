@@ -2,6 +2,11 @@ import XCTest
 import Later
 @testable import Object
 
+internal struct SMObj: Codable {
+    var id = 1
+    var string = "Object"
+}
+
 final class ObjectTests: XCTestCase {
     func testBasic() {
         XCTAssertNil(Object(0).value(as: Double.self))
@@ -115,11 +120,6 @@ final class ObjectTests: XCTestCase {
     }
     
     func testCodableObject() {
-        struct SMObj: Codable {
-            let id = 1
-            let string = "Object"
-        }
-        
         let obj = SMObj().object
         
         XCTAssertEqual(obj.id.value(), 1)
@@ -134,11 +134,6 @@ final class ObjectTests: XCTestCase {
     }
     
     func testConsume() {
-        struct SMObj: Codable {
-            let id = 1
-            let string = "Object"
-        }
-        
         let smObj = SMObj().object
         
         let dictObj = Object([
@@ -161,7 +156,7 @@ final class ObjectTests: XCTestCase {
         [smObj, dictObj, arrayObj]
             .forEach {
                 obj.consume($0)
-        }
+            }
         
         XCTAssertNotEqual(obj.id.value(), 10)
         
@@ -177,11 +172,6 @@ final class ObjectTests: XCTestCase {
     }
     
     func testAdd() {
-        struct SMObj: Codable {
-            let id = 1
-            let string = "Object"
-        }
-        
         let smObj = SMObj().object
         
         let dictObj = Object([
@@ -205,7 +195,7 @@ final class ObjectTests: XCTestCase {
         [smObj, dictObj]
             .forEach {
                 empty.consume($0)
-        }
+            }
         obj.add(childObject: empty)
         obj.add(array: arrayObj.array)
         
@@ -236,7 +226,7 @@ final class ObjectTests: XCTestCase {
                 XCTAssertEqual(obj.body.value(), "quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto")
                 
                 sema.signal()
-        }
+            }
         
         sema.wait()
     }
@@ -258,7 +248,7 @@ final class ObjectTests: XCTestCase {
                 XCTAssertEqual(first?.body.value(), "quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto")
                 
                 sema.signal()
-        }
+            }
         
         sema.wait()
     }
@@ -275,10 +265,104 @@ final class ObjectTests: XCTestCase {
                 XCTAssertEqual(obj.address.geo.lat.value(), "24.8918")
                 
                 sema.signal()
-        }
+            }
         
         sema.wait()
     }
+    
+    func testHashable() {
+        var objDict = [Object: Object]()
+        
+        let someObjectValue = Object("Some Value")
+        let someObjectKey = Object("Some Key")
+        
+        objDict[someObjectKey] = someObjectValue
+        
+        XCTAssertEqual(objDict[someObjectKey], someObjectValue)
+    }
+    
+    func testHashableModify() {
+        var objDict = [Object: Object]()
+        
+        let someObjectValue = Object("Some Value")
+        let someOtherObject = Object(someObjectValue)
+        let someObjectKey = Object("Some Key")
+        let emptyObject = Object()
+        
+        someObjectValue.modify { (value: String?) in
+            guard let _ = value else {
+                return "Some Value"
+            }
+            
+            return nil
+        }
+        
+        someOtherObject.modify { _ in
+            "Hello World!"
+        }
+        
+        emptyObject.modify { _ in "This should modify!" }
+        
+        objDict[someObjectKey] = someObjectValue
+        
+        XCTAssertNil(someObjectValue.variables["_value"])
+        XCTAssertEqual(objDict[someObjectKey], Object())
+        XCTAssertEqual(someOtherObject.value(), "Hello World!")
+        XCTAssertEqual(emptyObject, Object("This should modify!"))
+    }
+    
+    func testHashableSet() {
+        var objDict = [Object: Object]()
+        
+        let someObjectValue = Object("Some Value")
+        let someOtherObject = Object(someObjectValue)
+        let someObjectKey = Object("Some Key")
+        let emptyObject = Object()
+        
+        someObjectValue.set { (value: String) in
+            nil
+        }
+        
+        someOtherObject.set { _ in
+            "Hello World!"
+        }
+        
+        emptyObject.set { _ in "This should not set!" }
+        
+        objDict[someObjectKey] = someObjectValue
+        
+        XCTAssertEqual(objDict[someObjectKey], Object())
+        XCTAssertEqual(someOtherObject.value(), "Hello World!")
+        XCTAssertNil(someObjectValue.variables["_value"])
+        XCTAssertEqual(emptyObject, Object())
+        XCTAssertNotEqual(emptyObject, Object("This should not set!"))
+    }
+    
+    func testHashableUpdate() {
+        var objDict = [Object: Object]()
+        
+        let someObjectValue = Object("Some Value")
+        let someOtherObject = Object(someObjectValue)
+        let someObjectKey = Object("Some Key")
+        let emptyObject = Object()
+        
+        someObjectValue.update { value in
+            value + ": Hello World!"
+        }
+        
+        someOtherObject
+            .update { $0 + ": Hello World!" }
+        
+        emptyObject.update { _ in "This should not update!" }
+        
+        objDict[someObjectKey] = someObjectValue
+        
+        XCTAssertEqual(objDict[someObjectKey], someObjectValue)
+        XCTAssertEqual(someOtherObject, someObjectValue)
+        XCTAssertEqual(emptyObject, Object())
+        XCTAssertNotEqual(emptyObject, Object("This should not update!"))
+    }
+    
     
     static var allTests = [
         ("testBasic", testBasic),
@@ -295,6 +379,10 @@ final class ObjectTests: XCTestCase {
         ("testAdd", testAdd),
         ("testFetchObject", testFetchObject),
         ("testFetch100Objects", testFetch100Objects),
-        ("testDive", testDive)
+        ("testDive", testDive),
+        ("testHashable", testHashable),
+        ("testHashableModify", testHashableModify),
+        ("testHashableSet", testHashableSet),
+        ("testHashableUpdate", testHashableUpdate),
     ]
 }
