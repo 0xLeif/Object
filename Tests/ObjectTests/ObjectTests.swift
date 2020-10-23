@@ -363,6 +363,51 @@ final class ObjectTests: XCTestCase {
         XCTAssertNotEqual(emptyObject, Object("This should not update!"))
     }
     
+    func testObjectFunction() {
+        let obj = Object { o in
+            o.add(value: 0)
+            o.add(variable: "isCounting", value: false)
+            
+            o.add(function: "wait") { seconds -> Void in
+                guard let seconds = seconds as? Int else {
+                    throw ObjectError.invalidParameter
+                }
+                print("Waiting...")
+                sleep(UInt32(seconds))
+                o.update(variable: "isCounting") { (oldValue: Bool) in
+                    false
+                }
+                sleep(1)
+                print("Done!")
+            }
+            
+            o.add(function: "count") { _ in
+                o.update { (count: Int) -> Int in
+                    count + 1
+                }
+            }
+            
+            o.add(function: "counter") { _ -> Void in
+                o.update(variable: "isCounting") { (oldValue: Bool) in
+                    true
+                }
+                
+                while o.isCounting.value(as: Bool.self) ?? false {
+                    sleep(1)
+                    o.run(function: "count")
+                    print(o.value(as: Int.self) ?? -1)
+                }
+            }
+            
+        }
+    
+        
+        obj.async(function: "counter")
+        obj.run(function: "wait", value: 5)
+        
+        XCTAssertEqual(obj.value(), 5)
+    }
+    
     
     static var allTests = [
         ("testBasic", testBasic),
@@ -384,5 +429,6 @@ final class ObjectTests: XCTestCase {
         ("testHashableModify", testHashableModify),
         ("testHashableSet", testHashableSet),
         ("testHashableUpdate", testHashableUpdate),
+        ("testObjectFunction", testObjectFunction)
     ]
 }
